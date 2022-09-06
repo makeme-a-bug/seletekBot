@@ -4,21 +4,23 @@ from typing import Dict,List,Any,Union
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from reporter.tracker import Tracker
 from utils.utils import solve_captch
 from rich.console import Console
 
 class Reporter(webdriver.Remote):
 
-    def __init__(self,profile_name:str,profile_uuid:str, urls:List[str], command_executor:str, desired_capabilities:Dict={} , destroy_browser:bool = True ) -> None:
+    def __init__(self,profile_name:str,profile_uuid:str, urls:List[str], command_executor:str, destroy_browser:bool = True , tracker:List = [] ) -> None:
         self.command_executor = command_executor
-        self.capabilities = desired_capabilities
+        # self.capabilities = desired_capabilities
         self.profile_name = profile_name
         self.profile_uuid = profile_uuid
         self.urls = urls
         self.destroy_browser = destroy_browser
         self.console = Console()
+        self.tracker = tracker
 
-        super(Reporter,self).__init__(self.command_executor,desired_capabilities=self.capabilities)
+        super(Reporter,self).__init__(self.command_executor,desired_capabilities={})
         self.set_page_load_timeout(120)
         self.implicitly_wait(120)
 
@@ -28,9 +30,21 @@ class Reporter(webdriver.Remote):
         Starts reporting for the urls and profile given in the initial
         """
         for url in self.urls:
+            
+            self.tracker.append({
+                'profile':self.profile_name,
+                'exists':True,
+                'url':url
+            })
+
+
             self.get_page(url)
             captcha = self.solve_captcha()
             logged_in = self.is_profile_logged_in()
+
+            self.tracker[-1]['captcha_solved'] = captcha
+            self.tracker[-1]['Logged_in'] = logged_in
+
             if captcha and logged_in:
                 self.move_mouse_around()
                 self.click_abuse_button()
@@ -49,7 +63,14 @@ class Reporter(webdriver.Remote):
         returns:\n
         None
         """
-        self.get(url)
+        attempts = 0
+        url_open = False
+        while not url_open:
+            self.get(url)
+            if self.find_element(By.ID,"nav-logo") or attempts >= 3:
+                url_open = True
+            attempts +=1
+        print("page loaded")
 
     def solve_captcha(self) -> bool:
         """
@@ -75,6 +96,7 @@ class Reporter(webdriver.Remote):
         """
 
         if self.find_elements(By.CSS_SELECTOR, 'a[data-csa-c-content-id="nav_youraccount_btn"]'):
+            self.tracker[-1]['Logged_in'] = True
             return True
         self.console.log(f"{self.profile_name}:Profile not logged in into Amazon account",style='red')
         return False
@@ -99,16 +121,23 @@ class Reporter(webdriver.Remote):
                 self.switch_to_window(report_window)
                 #sometime captcha appears
                 captcha = self.solve_captcha()
+                self.tracker[-1]['report_captcha_solved'] = captcha
                 if captcha:
                     report_button = self.find_element(By.CSS_SELECTOR,'a[data-hook="cr-report-abuse-pop-over-button"]')
                     if report_button:
                         report_button.click()
+                        self.tracker[-1]['abused_button_clicked'] = True
                         self.console.log(f"[{self.profile_name}] [Report abuse ] button clicked" , style="blue")
-                        time.sleep(1)
                         self.close()
                         self.switch_to_window(main_window)
+                        self.tracker[-1]['report_butto_clicked'] = True
                         return True
-                self.console.log("report button not found",style="red")
+
+                    self.tracker[-1]['report_butto_clicked'] = False
+                    self.console.log("report button not found",style="red")
+                else:
+                    self.console.log("CAPTCHA not solved for report button popup",style="red")
+
             return False
             
         else:
@@ -125,7 +154,7 @@ class Reporter(webdriver.Remote):
         for move in movements:
             actions.move_by_offset(move[0], move[1]).pause(1).perform()
             actions.reset_actions()
-        
+            
         self.bring_inside_viewport('[id^=CardInstance]')
         time.sleep(2)
 
@@ -136,12 +165,13 @@ class Reporter(webdriver.Remote):
         brings a element to the center of viewport
         """
         recommendations = self.find_element(By.CSS_SELECTOR,selector)
-        desired_y = (recommendations.size['height'] / 2) + recommendations.location['y']
-        window_h = self.execute_script('return window.innerHeight')
-        window_y = self.execute_script('return window.pageYOffset')
-        current_y = (window_h / 2) + window_y
-        scroll_y_by = desired_y - current_y
-        self.execute_script("window.scrollBy(0, arguments[0]);", scroll_y_by)
+        if recommendations:
+            desired_y = (recommendations.size['height'] / 2) + recommendations.location['y']
+            window_h = self.execute_script('return window.innerHeight')
+            window_y = self.execute_script('return window.pageYOffset')
+            current_y = (window_h / 2) + window_y
+            scroll_y_by = desired_y - current_y
+            self.execute_script("window.scrollBy(0, arguments[0]);", scroll_y_by)
 
 
 

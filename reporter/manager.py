@@ -89,11 +89,15 @@ class ReporterManager:
     
     def create_reporters(self):
         with self.console.status("[bold green]Working on tasks...") as status:
+            profiles = []
             for profile_name in self.inputs.Profile.unique():
                 profile_uuid:str = self.profiles.get(profile_name,None)
-
                 if not profile_uuid:
                     self.console.log(f"profile not found:{profile_name}",style='red')
+                    profiles.append({
+                        'profile':profile_name,
+                        'exists':False,
+                    })
                     continue
 
                 urls:List[str] = self.inputs[self.inputs['Profile'] == profile_name]['Review URL'].tolist()
@@ -102,8 +106,10 @@ class ReporterManager:
                 if not mla_url:
                     continue
                     
-                with Reporter(profile_name , profile_uuid , urls , mla_url) as R:
+                with Reporter(profile_name , profile_uuid , urls , mla_url,tracker = profiles) as R:
                     R.start_reporting()
 
                 self.console.log(f"{profile_name} reporting complete",style='green')
+            tracker = pd.DataFrame(profiles)
+            tracker.to_csv('report.csv')
                 
