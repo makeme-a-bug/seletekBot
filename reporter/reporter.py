@@ -30,10 +30,12 @@ class Reporter(webdriver.Remote):
         for url in self.urls:
             self.get_page(url)
             captcha = self.solve_captcha()
-            self.move_mouse_around()
             logged_in = self.is_profile_logged_in()
             if captcha and logged_in:
+                self.move_mouse_around()
                 self.click_abuse_button()
+            elif not logged_in:
+                break
             else:
                 continue
 
@@ -119,13 +121,13 @@ class Reporter(webdriver.Remote):
         moves mouse arounds the screen in random pattern.
         """
         movements = [ [ 1 + random.random() * 100  , 1 + random.random() * 100]  for i in range(5) ]
-        print(movements)
         actions = ActionChains(self)
         for move in movements:
-            actions.move_by_offset(move[0], move[1]).pause(2).perform()
+            actions.move_by_offset(move[0], move[1]).pause(1).perform()
             actions.reset_actions()
         
         self.bring_inside_viewport('[id^=CardInstance]')
+        time.sleep(2)
 
        
 
