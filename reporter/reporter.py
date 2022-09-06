@@ -4,7 +4,6 @@ from typing import Dict,List,Any,Union
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from reporter.tracker import Tracker
 from utils.utils import solve_captch
 from rich.console import Console
 
@@ -154,7 +153,7 @@ class Reporter(webdriver.Remote):
         for move in movements:
             actions.move_by_offset(move[0], move[1]).pause(1).perform()
             actions.reset_actions()
-            
+
         self.bring_inside_viewport('[id^=CardInstance]')
         time.sleep(2)
 
