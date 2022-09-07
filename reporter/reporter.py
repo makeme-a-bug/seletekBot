@@ -148,13 +148,20 @@ class Reporter(webdriver.Remote):
         """
         moves mouse arounds the screen in random pattern.
         """
-        movements = [ [ 1 + random.random() * 100  , 1 + random.random() * 100]  for i in range(5) ]
+        elements = self.find_elements(By.CSS_SELECTOR,'a')
+        # elements = list(filter(lambda x : x.is_displayed() , elements))
         actions = ActionChains(self)
-        for move in movements:
-            actions.move_by_offset(move[0], move[1]).pause(1).perform()
-            actions.reset_actions()
-
-        self.bring_inside_viewport('[id^=CardInstance]')
+        length_of_elements = len(elements)
+        if elements:
+            for _ in range(length_of_elements if length_of_elements <= 10 else 10):
+                try:
+                    move_to = random.choice(elements)
+                    self.execute_script("arguments[0].scrollIntoView(true);", move_to)
+                    actions.move_to_element(random.choice(elements)).pause(2).perform()
+                    time.sleep(2)
+                    actions.reset_actions()
+                except:
+                    pass
         time.sleep(2)
 
        
