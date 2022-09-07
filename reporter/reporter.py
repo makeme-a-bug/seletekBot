@@ -153,12 +153,12 @@ class Reporter(webdriver.Remote):
         actions = ActionChains(self)
         length_of_elements = len(elements)
         if elements:
-            for _ in range(length_of_elements if length_of_elements <= 10 else 10):
+            for _ in range(length_of_elements if length_of_elements <= 5 else 5):
                 try:
                     move_to = random.choice(elements)
                     self.execute_script("arguments[0].scrollIntoView(true);", move_to)
                     actions.move_to_element(random.choice(elements)).pause(2).perform()
-                    time.sleep(2)
+                    time.sleep(4)
                     actions.reset_actions()
                 except:
                     pass
