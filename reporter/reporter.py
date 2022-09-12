@@ -121,7 +121,7 @@ class Reporter(webdriver.Remote):
                     report_window = window
 
             if report_window:
-                self.switch_to_window(report_window)
+                self.switch_to.window(report_window)
                 #sometime captcha appears
                 captcha = self.solve_captcha()
                 self.tracker[-1]['report_captcha_solved'] = captcha
@@ -132,7 +132,7 @@ class Reporter(webdriver.Remote):
                         self.tracker[-1]['abused_button_clicked'] = True
                         self.console.log(f"[{self.profile_name}] [Report abuse ] button clicked" , style="blue")
                         self.close()
-                        self.switch_to_window(main_window)
+                        self.switch_to.window(main_window)
                         self.tracker[-1]['report_butto_clicked'] = True
                         return True
 
