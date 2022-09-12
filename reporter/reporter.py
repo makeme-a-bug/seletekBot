@@ -37,20 +37,20 @@ class Reporter(webdriver.Remote):
             })
 
 
-            self.get_page(url)
-            captcha = self.solve_captcha()
-            logged_in = self.is_profile_logged_in()
+            if self.get_page(url):
+                captcha = self.solve_captcha()
+                logged_in = self.is_profile_logged_in()
 
-            self.tracker[-1]['captcha_solved'] = captcha
-            self.tracker[-1]['Logged_in'] = logged_in
+                self.tracker[-1]['captcha_solved'] = captcha
+                self.tracker[-1]['Logged_in'] = logged_in
 
-            if captcha and logged_in:
-                self.move_mouse_around()
-                self.click_abuse_button()
-            elif not logged_in:
-                break
-            else:
-                continue
+                if captcha and logged_in:
+                    self.move_mouse_around()
+                    self.click_abuse_button()
+                elif not logged_in:
+                    break
+                else:
+                    continue
 
         self.quit()
 
@@ -66,10 +66,14 @@ class Reporter(webdriver.Remote):
         url_open = False
         while not url_open:
             self.get(url)
-            if self.find_element(By.ID,"nav-logo") or attempts >= 3:
+            if self.find_elements(By.ID,"nav-logo") or "Try different image" in self.page_source:
                 url_open = True
+                print("page loaded")
+            if attempts >= 3:
+                print("page not loaded")
+                break
             attempts +=1
-        print("page loaded")
+        return url_open
 
     def solve_captcha(self) -> bool:
         """
