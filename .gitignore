@@ -2,4 +2,6 @@ __pycache__/
 *.xml
 *.iml
 *.csv
+*.rar
+*.zip
 

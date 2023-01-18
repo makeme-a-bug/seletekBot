@@ -16,11 +16,28 @@ def solve_captch(driver, attempts=3):
             driver.find_element(By.CSS_SELECTOR, 'button.a-button-text').click()
             time.sleep(1)
             if "Try different image" in driver.page_source:
+                try:
+                    driver.minimize_window()
+                except:
+                    pass
+                try:
+                    driver.maximize_window()
+                except:
+                    pass
+
                 continue
             else:
                 print("Captcha solved")
                 return True
         except Exception as e:
+            try:
+                driver.minimize_window()
+            except:
+                pass
+            try:
+                driver.maximize_window()
+            except:
+                pass
             continue
 
     print("Captcha not solved.")
